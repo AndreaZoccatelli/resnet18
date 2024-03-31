@@ -1,0 +1,123 @@
+---
+title: "Resnet-18 from scratch (Pytorch)"
+format: html
+---
+Example notebook ([Quarto](https:quarto.org)) to run the built from scratch Resnet-18 on Cifar10 dataset.
+This is a test: no dataset exploration, augmentation or further tuning is provided.
+
+## Import libraries
+```{python}
+import os
+import torch
+import torchvision
+import numpy as np
+from resnet18 import *
+```
+
+## Prepare dataset
+```{python}
+transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
+
+cifar_train=torchvision.datasets.CIFAR10(root=os.getcwd(),train=True,download=False, transform=transform)
+cifar_test=torchvision.datasets.CIFAR10(root=os.getcwd(),train=False,download=False, transform=transform)
+```
+
+```{python}
+np.random.seed(2)
+train_size=len(cifar_train)
+indices=np.array(range(train_size))
+valid_size=int(np.floor(0.2 * train_size))
+
+valid_indices=np.random.choice(indices,size=valid_size,replace=False)
+train_indices=np.setdiff1d(indices,valid_indices)
+
+train_set=torch.utils.data.Subset(cifar_train, train_indices)
+valid_set=torch.utils.data.Subset(cifar_train, valid_indices)
+
+train_loader=torch.utils.data.DataLoader(train_set, batch_size=1000, shuffle=True)
+valid_loader=torch.utils.data.DataLoader(valid_set, batch_size=1000, shuffle=True)
+test_loader=torch.utils.data.DataLoader(cifar_test, batch_size=1000, shuffle=True)
+```
+
+## Initialise Resnet-18
+```{python}
+model=Resnet(img_channels=3, n_classes=10)
+optimizer=torch.optim.Adam(model.parameters())
+loss_fn=torch.nn.CrossEntropyLoss()
+```
+
+## Training and validation
+```{python}
+def train_epoch(model, train_loader, optimizer, loss_fn):
+    model.train()
+    running_loss = 0.0
+    correct = 0
+    total = 0
+    for inputs, targets in train_loader:
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        loss = loss_fn(outputs, targets)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+        _, predicted = outputs.max(1)
+        total += targets.size(0)
+        correct += predicted.eq(targets).sum().item()
+    
+    train_loss = running_loss / len(train_loader)
+    train_accuracy = 100. * correct / total
+    
+    return train_loss, train_accuracy
+
+def validate_epoch(model, valid_loader, loss_fn):
+    model.eval()
+    running_loss = 0.0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for inputs, targets in valid_loader:
+            outputs = model(inputs)
+            loss = loss_fn(outputs, targets)
+            
+            running_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+    
+    valid_loss = running_loss / len(valid_loader)
+    valid_accuracy = 100. * correct / total
+    
+    return valid_loss, valid_accuracy
+```
+
+```{python}
+num_epochs = 10
+for epoch in range(num_epochs):
+    train_loss, train_accuracy = train_epoch(model, train_loader, optimizer, loss_fn)
+    valid_loss, valid_accuracy = validate_epoch(model, valid_loader, loss_fn)
+    print(f'Epoch {epoch+1}/{num_epochs}')
+    print(f'Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.2f}%')
+    print(f'Valid Loss: {valid_loss:.4f}, Valid Accuracy: {valid_accuracy:.2f}%')
+```
+
+## Evaluation on test set
+```{python}
+model.eval()
+correct=0
+total=0
+
+with torch.no_grad():
+    for images, labels in test_loader:
+        outputs=model(images)
+        _, predicted=torch.max(outputs, 1)
+        total+=labels.size(0)
+        correct+=(predicted==labels).sum().item()
+
+accuracy = 100 * correct / total
+print(f'Test Accuracy: {accuracy:.2f}%') #Test Accuracy: 67.79%
+```
+
+## Save Model
+```{python}
+torch.save(model.state_dict(), 'resnet18_cifar10.pth')
+```

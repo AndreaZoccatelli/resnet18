@@ -31,6 +31,8 @@ class Resblock(nn.Module):
         out=self.batchnorm(out)
         if self.downsample is not None:
             I=self.downsample(x)
+        else:
+            I=x
         out+=I
         out=self.relu(out)
         return out
@@ -76,10 +78,10 @@ class Resnet(nn.Module):
             )
         return nn.Sequential(
             Resblock(in_channels, out_channels, stride, downsample),
-            Resblock(in_channels, out_channels)
+            Resblock(out_channels, out_channels)
         )
     
-    def forward(self, x:nn.Tensor):
+    def forward(self, x:torch.Tensor):
         x=self.conv_layer_in(x)
         x=self.batchnorm(x)
         x=self.relu(x)
