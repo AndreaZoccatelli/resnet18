@@ -5,6 +5,8 @@ format: html
 Example notebook ([Quarto](https:quarto.org)) to run the built from scratch Resnet-18 on Cifar10 dataset.
 This is a test: no dataset exploration, augmentation or further tuning is provided.
 
+See [here](https://arxiv.org/abs/1512.03385) the original research paper.
+
 ## Import libraries
 ```{python}
 import os
