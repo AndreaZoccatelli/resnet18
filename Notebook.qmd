@@ -2,7 +2,7 @@
 title: "Resnet-18 from scratch (Pytorch)"
 format: html
 ---
-Example notebook ([Quarto](https:quarto.org)) to run the built from scratch Resnet-18 on Cifar10 dataset.
+Example notebook ([Quarto](https:quarto.org)) to run the built from scratch ResNet-18 on CIFAR-10 dataset.
 This is a test: no dataset exploration, augmentation or further tuning is provided.
 
 See [here](https://arxiv.org/abs/1512.03385) the original research paper.
@@ -41,7 +41,7 @@ valid_loader=torch.utils.data.DataLoader(valid_set, batch_size=1000, shuffle=Tru
 test_loader=torch.utils.data.DataLoader(cifar_test, batch_size=1000, shuffle=True)
 ```
 
-## Initialise Resnet-18
+## Initialise ResNet-18
 ```{python}
 model=Resnet(img_channels=3, n_classes=10)
 optimizer=torch.optim.Adam(model.parameters())
